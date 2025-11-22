@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percepta SIEM - SOC Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #131835;
+            --bg-tertiary: #1a1f3a;
+            --accent-primary: #00d4ff;
+            --accent-secondary: #6366f1;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3548;
+            --critical: #ef4444;
+            --high: #f59e0b;
+            --medium: #eab308;
+            --low: #3b82f6;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 32px;
+            margin-left: auto;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Main Content */
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-secondary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: var(--accent-secondary);
+        }
+
+        /* Agent tabs */
+        .agent-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 8px 24px 0 24px;
+            background: var(--bg-secondary);
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .agent-tab {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        .agent-tab.active {
+            background: var(--accent-primary);
+            color: #001018;
+            border-color: transparent;
+        }
+
+        /* Main Panel */
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Event Table */
+        .event-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .event-table th {
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .event-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .event-row {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .event-row:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-critical { background: var(--critical); color: white; }
+        .badge-high { background: var(--high); color: white; }
+        .badge-medium { background: var(--medium); color: black; }
+        .badge-low { background: var(--low); color: white; }
+        .badge-success { background: var(--success); color: white; }
+
+        /* Alert Cards */
+        .alert-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .alert-card:hover {
+            transform: translateX(4px);
+            border-left-width: 6px;
+        }
+
+        .alert-card.critical { border-left-color: var(--critical); }
+        .alert-card.high { border-left-color: var(--high); }
+        .alert-card.medium { border-left-color: var(--medium); }
+        .alert-card.low { border-left-color: var(--low); }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .alert-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .alert-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected { background: var(--success); }
+        .status-dot.disconnected { background: var(--critical); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">⚡ Percepta SIEM</div>
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-dot disconnected" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value" id="statEvents">0</div>
+                    <div class="stat-label">Events</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statAlerts">0</div>
+                    <div class="stat-label">Alerts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statAgents">0</div>
+                    <div class="stat-label">Agents</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="nav-item active" onclick="showTab('events')">
+                    📊 Events
+                </div>
+                <div class="nav-item" onclick="showTab('alerts')">
+                    🚨 Alerts
+                </div>
+                <div class="nav-item" onclick="showTab('agents')">
+                    💻 Agents
+                </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel">
+                <div class="tabs">
+                    <div class="tab active">Real-time Stream</div>
+                </div>
+
+                <!-- Dynamic Agent Tabs -->
+                <div class="agent-tabs" id="agentTabs"></div>
+
+                <div class="panel-content">
+                    <!-- Filters -->
+                    <div class="filters">
+                        <input type="text" class="filter-input" placeholder="Search..." id="searchInput">
+                        <select class="filter-input" id="severityFilter">
+                            <option value="">All Severities</option>
+                            <option value="Critical">Critical</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select class="filter-input" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="AUTH">Authentication</option>
+                            <option value="NETWORK">Network</option>
+                            <option value="PROCESS">Process</option>
+                            <option value="FILE">File</option>
+                        </select>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div id="contentArea">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Key Management
+        let API_KEY = localStorage.getItem('percepta_api_key') || '';
+        
+        function promptForApiKey() {
+            const key = prompt('Enter your Percepta API Key:\n(Found in server logs as "Your one-time GUI API Key")');
+            if (key) {
+                API_KEY = key.trim();
+                localStorage.setItem('percepta_api_key', API_KEY);
+                location.reload();
+            }
+        }
+        
+        // Add API key to all fetch requests
+        async function authenticatedFetch(url, options = {}) {
+            if (!options.headers) options.headers = {};
+            options.headers['X-Api-Key'] = API_KEY;
+            
+            const response = await fetch(url, options);
+            
+            if (response.status === 401) {
+                localStorage.removeItem('percepta_api_key');
+                promptForApiKey();
+                throw new Error('Unauthorized - API key required');
+            }
+            
+            return response;
+        }
+
+        // State
+        let ws = null;
+        let events = [];
+        let alerts = [];
+    let currentTab = 'events';
+    let selectedAgent = '';
+    let agentList = new Map(); // id -> { id, hostname }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if API key is set
+            if (!API_KEY) {
+                promptForApiKey();
+                if (!API_KEY) return; // User cancelled
+            }
+            
+            connectWebSocket();
+            loadInitialData();
+            setupFilters();
+        });
+
+        // WebSocket Connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/stream`;
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                updateConnectionStatus(true);
+            };
+
+            ws.onclose = () => {
+                updateConnectionStatus(false);
+                // Reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                handleWebSocketMessage(msg);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus(false);
+            };
+        }
+
+        function handleWebSocketMessage(msg) {
+            if (msg.type === 'event') {
+                events.unshift(msg.data);
+                if (events.length > 1000) events.pop(); // Keep last 1000
+                upsertAgentFromEvent(msg.data);
+                renderAgentTabs();
+                if (currentTab === 'events') renderEvents();
+            } else if (msg.type === 'alert') {
+                alerts.unshift(msg.data);
+                if (currentTab === 'alerts') renderAlerts();
+            } else if (msg.type === 'stats') {
+                updateStats(msg.data);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                dot.className = 'status-dot connected';
+                text.textContent = 'Connected';
+            } else {
+                dot.className = 'status-dot disconnected';
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // Load Initial Data
+        async function loadInitialData() {
+            try {
+                // Load events
+                const eventsRes = await authenticatedFetch('/api/events?limit=100');
+                const eventsData = await eventsRes.json();
+                events = eventsData.events;
+                // Seed agent list
+                events.forEach(e => upsertAgentFromEvent(e));
+                renderAgentTabs();
+
+                // Load alerts
+                const alertsRes = await authenticatedFetch('/api/alerts');
+                const alertsData = await alertsRes.json();
+                alerts = alertsData.alerts;
+
+                // Load stats
+                const statsRes = await authenticatedFetch('/api/stats');
+                const statsData = await statsRes.json();
+                updateStats(statsData);
+
+                renderCurrentTab();
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('statEvents').textContent = stats.total_events || stats.events_total || events.length;
+            document.getElementById('statAlerts').textContent = stats.total_alerts || stats.alerts_total || alerts.length;
+            document.getElementById('statAgents').textContent = stats.connected_agents || agentList.size || 0;
+        }
+
+        // Rendering
+        function renderEvents() {
+            const filtered = filterEvents(events);
+            const html = `
+                <table class="event-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Agent</th>
+                            <th>Category</th>
+                            <th>Action</th>
+                            <th>User</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventTbody">
+                        ${filtered.map((e, idx) => `
+                            <tr class="event-row" data-idx="${idx}">
+                                <td>${formatTime(e.event_time)}</td>
+                                <td>${e.agent?.hostname || 'Unknown'}</td>
+                                <td><span class="badge badge-low">${getCategoryName(e.event?.category)}</span></td>
+                                <td>${e.event?.action || 'N/A'}</td>
+                                <td>${e.user?.name || '-'}</td>
+                                <td>${escapeHtml(e.event?.summary || '')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('contentArea').innerHTML = html;
+
+            // Attach click handler
+            const tbody = document.getElementById('eventTbody');
+            if (tbody) {
+                tbody.addEventListener('click', (ev) => {
+                    const row = ev.target.closest('tr[data-idx]');
+                    if (!row) return;
+                    const idx = parseInt(row.getAttribute('data-idx'));
+                    const filtered = filterEvents(events);
+                    const e = filtered[idx];
+                    if (e) showEventDetails(e);
+                });
+            }
+        }
+
+        function renderAlerts() {
+            const filtered = filterAlerts(alerts);
+            const html = filtered.map(a => `
+                <div class="alert-card ${a.severity?.toLowerCase()}">
+                    <div class="alert-header">
+                        <div class="alert-title">${a.rule_name}</div>
+                        <span class="badge badge-${a.severity?.toLowerCase()}">${a.severity}</span>
+                    </div>
+                    <div class="alert-message">${a.message}</div>
+                    <div class="alert-meta">
+                        <span>🖥️ ${a.agent_hostname}</span>
+                        <span>🕒 ${formatTime({seconds: Math.floor(new Date(a.first_seen).getTime() / 1000)})}</span>
+                        <span>📊 Count: ${a.count}</span>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('contentArea').innerHTML = html || '<div class="loading">No alerts</div>';
+        }
+
+        // Filters
+        function setupFilters() {
+            document.getElementById('searchInput').addEventListener('input', renderCurrentTab);
+            document.getElementById('severityFilter').addEventListener('change', renderCurrentTab);
+            document.getElementById('categoryFilter').addEventListener('change', renderCurrentTab);
+        }
+
+        function filterEvents(events) {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            
+            return events.filter(e => {
+                if (selectedAgent && (e.agent?.id !== selectedAgent)) return false;
+                if (search && !JSON.stringify(e).toLowerCase().includes(search)) return false;
+                if (category && getCategoryName(e.event?.category) !== category) return false;
+                return true;
+            });
+        }
+
+        function filterAlerts(alerts) {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const severity = document.getElementById('severityFilter').value; // e.g., "High"
+            const category = document.getElementById('categoryFilter').value; // e.g., "AUTH"
+
+            return alerts.filter(a => {
+                if (selectedAgent && (a.agent_id !== selectedAgent)) return false;
+                if (severity && (a.severity !== severity)) return false;
+                if (category) {
+                    const ac = (a.category || '').toString().toUpperCase();
+                    if (ac !== category.toUpperCase()) return false;
+                }
+                if (search) {
+                    const hay = `${a.rule_name||''} ${a.message||''} ${a.agent_hostname||''} ${a.category||''}`.toLowerCase();
+                    if (!hay.includes(search)) return false;
+                }
+                return true;
+            });
+        }
+
+        // Navigation
+        function showTab(tab) {
+            currentTab = tab;
+            renderCurrentTab();
+        }
+
+        function renderCurrentTab() {
+            if (currentTab === 'events') renderEvents();
+            else if (currentTab === 'alerts') renderAlerts();
+        }
+
+        function upsertAgentFromEvent(e) {
+            const id = e.agent?.id;
+            if (!id) return;
+            const hostname = e.agent?.hostname || id;
+            agentList.set(id, { id, hostname });
+        }
+
+        function renderAgentTabs() {
+            const root = document.getElementById('agentTabs');
+            if (!root) return;
+            const agents = Array.from(agentList.values()).sort((a,b) => a.hostname.localeCompare(b.hostname));
+            const allActive = selectedAgent === '' ? 'active' : '';
+            const tabs = [`<div class="agent-tab ${allActive}" data-agent="">All Agents</div>`]
+                .concat(agents.map(a => `<div class="agent-tab ${selectedAgent===a.id?'active':''}" data-agent="${escapeAttr(a.id)}">${escapeHtml(a.hostname)}</div>`));
+            root.innerHTML = tabs.join('');
+            root.querySelectorAll('.agent-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    selectedAgent = tab.getAttribute('data-agent') || '';
+                    renderAgentTabs();
+                    renderCurrentTab();
+                });
+            });
+        }
+
+        // Utilities
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp.seconds * 1000);
+            return date.toLocaleString();
+        }
+
+        function getCategoryName(cat) {
+            const map = { 0: 'UNKNOWN', 1: 'AUTH', 2: 'NETWORK', 3: 'FILE', 4: 'PROCESS', 5: 'REGISTRY', 6: 'SYSTEM', 7: 'OTHER' };
+            return map[cat] || 'UNKNOWN';
+        }
+
+        function showEventDetails(event) {
+            alert('Event Details:\n\n' + JSON.stringify(event, null, 2));
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+        }
+
+        function escapeAttr(str) {
+            return String(str).replace(/["'\\<>\s]/g, '_');
+        }
+    </script>
+</body>
+</html>

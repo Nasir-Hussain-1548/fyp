@@ -1,0 +1,200 @@
+# Percepta SIEM Detection Rules
+# Each rule defines conditions that trigger alerts when matched against incoming events
+
+rules:
+  - id: failed_login_threshold
+    name: Multiple Failed Login Attempts
+    description: Detects potential brute-force attacks via repeated failed authentication
+    enabled: true
+    severity: high
+    category: authentication
+    conditions:
+      - field: event.category
+        operator: equals
+        value: AUTH
+      - field: event.outcome
+        operator: equals
+        value: FAILURE
+      - field: event.action
+        operator: contains
+        value: logon
+    threshold:
+      count: 5
+      window_seconds: 300
+      group_by: [user.name, host.ip]
+    actions:
+      - type: alert
+        message: "Detected {{count}} failed login attempts from {{user.name}} on {{host.ip}} in {{window_seconds}} seconds"
+
+  - id: privilege_escalation
+    name: Privilege Escalation Detected
+    description: Detects attempts to elevate privileges (sudo, runas, etc)
+    enabled: true
+    severity: critical
+    category: process
+    conditions:
+      - field: event.category
+        operator: equals
+        value: PROCESS
+      - field: process.name
+        operator: in
+        values: [sudo, su, runas, doas]
+      - field: event.outcome
+        operator: equals
+        value: SUCCESS
+    actions:
+      - type: alert
+        message: "Privilege escalation via {{process.name}} by {{user.name}} on {{agent.hostname}}"
+
+  - id: suspicious_powershell
+    name: Suspicious PowerShell Execution
+    description: Detects encoded or obfuscated PowerShell commands
+    enabled: true
+    severity: high
+    category: process
+    conditions:
+      - field: event.category
+        operator: equals
+        value: PROCESS
+      - field: process.name
+        operator: contains
+        value: powershell
+      - field: process.command_line
+        operator: regex
+        value: '(-enc|-encodedcommand|-w hidden|-nop)'
+    actions:
+      - type: alert
+        message: "Suspicious PowerShell command detected: {{process.command_line}}"
+
+  - id: sensitive_file_access
+    name: Access to Sensitive Files
+    description: Monitors access to credential stores and sensitive system files
+    enabled: true
+    severity: medium
+    category: file
+    conditions:
+      - field: event.category
+        operator: equals
+        value: FILE
+      - field: file.path
+        operator: regex
+        value: '(shadow|passwd|SAM|SYSTEM|credentials|id_rsa|\.ssh)'
+      - field: file.operation
+        operator: in
+        values: [READ, MODIFIED]
+    actions:
+      - type: alert
+        message: "Sensitive file {{file.operation}} by {{user.name}}: {{file.path}}"
+
+  - id: network_c2_port
+    name: Connection to Known C2 Ports
+    description: Detects outbound connections to common command-and-control ports
+    enabled: true
+    severity: high
+    category: network
+    conditions:
+      - field: event.category
+        operator: equals
+        value: NETWORK
+      - field: network.direction
+        operator: equals
+        value: OUTBOUND
+      - field: network.dst_port
+        operator: in
+        values: [4444, 5555, 6666, 7777, 8888, 9999]
+    actions:
+      - type: alert
+        message: "Suspicious outbound connection from {{agent.hostname}} to {{network.dst_ip}}:{{network.dst_port}}"
+
+  - id: new_user_created
+    name: New User Account Created
+    description: Alert when a new user account is created on the system
+    enabled: true
+    severity: medium
+    category: authentication
+    conditions:
+      - field: event.category
+        operator: equals
+        value: AUTH
+      - field: event.action
+        operator: contains
+        value: user_add
+    actions:
+      - type: alert
+        message: "New user account created: {{user.name}} by {{metadata.creator}}"
+
+  - id: registry_persistence
+    name: Registry Run Key Modification
+    description: Detects modifications to registry autorun keys (Windows persistence)
+    enabled: true
+    severity: high
+    category: registry
+    conditions:
+      - field: event.category
+        operator: equals
+        value: REGISTRY
+      - field: registry.path
+        operator: regex
+        value: '(Run|RunOnce|RunServices)'
+    actions:
+      - type: alert
+        message: "Registry persistence key modified: {{registry.path}} = {{registry.value}}"
+
+  - id: mass_file_encryption
+    name: Potential Ransomware Activity
+    description: Detects rapid file modifications that may indicate ransomware
+    enabled: true
+    severity: critical
+    category: file
+    conditions:
+      - field: event.category
+        operator: equals
+        value: FILE
+      - field: file.operation
+        operator: equals
+        value: MODIFIED
+    threshold:
+      count: 50
+      window_seconds: 60
+      group_by: [agent.id]
+    actions:
+      - type: alert
+        message: "Potential ransomware: {{count}} file modifications in {{window_seconds}}s on {{agent.hostname}}"
+
+  - id: unauthorized_service_install
+    name: Service Installation
+    description: Alert when new system services are installed
+    enabled: true
+    severity: medium
+    category: system
+    conditions:
+      - field: event.category
+        operator: equals
+        value: SYSTEM
+      - field: event.action
+        operator: contains
+        value: service_install
+    actions:
+      - type: alert
+        message: "New service installed on {{agent.hostname}}: {{metadata.service_name}}"
+
+  - id: suspicious_network_scan
+    name: Port Scanning Activity
+    description: Detects rapid connections to multiple ports (potential reconnaissance)
+    enabled: true
+    severity: medium
+    category: network
+    conditions:
+      - field: event.category
+        operator: equals
+        value: NETWORK
+      - field: network.direction
+        operator: equals
+        value: OUTBOUND
+    threshold:
+      count: 20
+      window_seconds: 30
+      group_by: [agent.id, network.src_ip]
+    actions:
+      - type: alert
+        message: "Port scan detected from {{network.src_ip}}: {{count}} connections in {{window_seconds}}s"

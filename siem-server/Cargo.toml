@@ -1,0 +1,21 @@
+[package]
+name = "siem-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing-appender = "0.2"          # Correct version of tracing-appender
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }        # Correct version of tracing-subscriber
+axum = { version = "0.7", features = ["macros", "json"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "signal", "net"] }
+tower = "0.4"
+tower-cookies = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+webbrowser = "0.8"
+parking_lot = "0.12"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+tracing = "0.1"
+regex = "1"

@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Percepta Server",
+      "cargo": {
+        "args": [
+          "build",
+          "--package=percepta-server"
+        ]
+      },
+      "program": "${cargo:program}",
+      "args": [
+        "--listen",
+        "0.0.0.0:50051"
+      ],
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Percepta Agent (Simulate)",
+      "cargo": {
+        "args": [
+          "build",
+          "--package=percepta-agent",
+          "--features",
+          "simulate"
+        ]
+      },
+      "program": "${cargo:program}",
+      "args": [
+        "--log-level",
+        "debug"
+      ],
+      "cwd": "${workspaceFolder}/agent"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  // Enable clippy as the default linter for better diagnostics
+  "rust-analyzer.check.command": "clippy",
+
+  // Automatically format code on save
+  "editor.formatOnSave": true,
+
+  // Associate .md files with markdown for better rendering
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

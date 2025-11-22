@@ -1,0 +1,18 @@
+[
+  {
+    "agent_id": "845d44bd-0d05-4299-a77b-49f8ceeb1408",
+    "agent_name": "windows-agent-001",
+    "host": "DESKTOP-J8IMSVT",
+    "platform": "windows",
+    "registration_date": "2025-11-27T18:52:05.990914300+00:00",
+    "last_heartbeat": "2025-11-27T18:52:05.990914300+00:00"
+  },
+  {
+    "agent_id": "7202b91f-9672-403b-91c7-5e9d2d061c65",
+    "agent_name": "test-agent",
+    "host": "testhost",
+    "platform": "windows",
+    "registration_date": "2025-11-28T20:13:48.663617+00:00",
+    "last_heartbeat": "2025-11-28T20:13:48.663617+00:00"
+  }
+]

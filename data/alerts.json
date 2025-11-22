@@ -1,0 +1,29 @@
+[
+  {
+    "id": "36ea18aa-8115-47a2-8e4b-b478a56b7e9a",
+    "name": "Success Login with Event ID 4624",
+    "level": "WARN",
+    "keyword": "4624",
+    "description": "Windows event 4624 - Successful login",
+    "created_at": "2025-11-27T17:34:40.054352800Z",
+    "enabled": true
+  },
+  {
+    "id": "efa7c568-0c47-4e17-a860-3e1c558f2def",
+    "name": "Security Events",
+    "level": "INFO",
+    "keyword": "Security event",
+    "description": "General security events",
+    "created_at": "2025-11-27T17:35:03.586115200Z",
+    "enabled": true
+  },
+  {
+    "id": "a6935bb0-c509-4606-a7c1-45cae8c33d65",
+    "name": "Another Attempt",
+    "level": "ERROR",
+    "keyword": "dflkjds",
+    "description": "dsslkfj dslk",
+    "created_at": "2025-12-02T14:35:56.445101100Z",
+    "enabled": true
+  }
+]

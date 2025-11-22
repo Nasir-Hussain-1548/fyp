@@ -1,0 +1,17 @@
+nohup: ignoring input
+{"timestamp":"2025-11-07T06:19:58.519784Z","level":"INFO","fields":{"message":"📋 Logging initialized with level: info"},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.519880Z","level":"INFO","fields":{"message":"🔧 Initializing Percepta SIEM Server..."},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.524933Z","level":"INFO","fields":{"message":"🗃️ SQLite database initialized at /home/rajputana/.local/share/percepta-siem/percepta.db"},"target":"percepta_server::storage"}
+{"timestamp":"2025-11-07T06:19:58.525265Z","level":"INFO","fields":{"message":"Recovered 0 events from WAL"},"target":"percepta_server::storage"}
+{"timestamp":"2025-11-07T06:19:58.525458Z","level":"INFO","fields":{"message":"🗄️ Hybrid Storage Engine initialized. Path: /home/rajputana/.local/share/percepta-siem"},"target":"percepta_server::storage"}
+{"timestamp":"2025-11-07T06:19:58.525524Z","level":"WARN","fields":{"message":"rules.yaml not found, running without detection rules"},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.525556Z","level":"WARN","fields":{"message":"PERCEPTA_API_KEY not set. Using a randomly generated key."},"target":"percepta_server"}
+🔑 Your one-time GUI API Key is: 45TWpqtYNv7IYgK5kPDE1TCt1JuAtviW
+{"timestamp":"2025-11-07T06:19:58.526709Z","level":"INFO","fields":{"message":"🌐 Web server running at http://0.0.0.0:8080"},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.526720Z","level":"INFO","fields":{"message":"🚀 gRPC server running at https://0.0.0.0:50051"},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.527268Z","level":"INFO","fields":{"message":"🔒 gRPC mTLS configuration prepared - client certificates required"},"target":"percepta_server::tls"}
+{"timestamp":"2025-11-07T06:19:58.527297Z","level":"INFO","fields":{"message":"🔧 Initializing CollectorService..."},"target":"percepta_server::collector"}
+{"timestamp":"2025-11-07T06:19:58.527749Z","level":"INFO","fields":{"message":"📢 mDNS service registered: instance='percepta-siem-server', type='_percepta-siem._tcp.local.', port=50051"},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.528321Z","level":"INFO","fields":{"message":"Kicking off hourly WAL compaction task..."},"target":"percepta_server"}
+{"timestamp":"2025-11-07T06:19:58.528341Z","level":"INFO","fields":{"message":"🔄 Starting WAL compaction process..."},"target":"percepta_server::storage"}
+{"timestamp":"2025-11-07T06:19:58.528420Z","level":"INFO","fields":{"message":"WAL file is empty, skipping compaction."},"target":"percepta_server::storage"}

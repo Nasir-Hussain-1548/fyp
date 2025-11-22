@@ -1,0 +1,85 @@
+[package]
+name = "percepta-server"
+version = "0.1.0"
+edition = "2021"
+description = "Server core for Percepta SIEM - A distributed security information and event management system"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/your-org/percepta-siem"
+keywords = ["siem", "security", "logging", "grpc", "async"]
+categories = ["network-programming", "web-programming", "development-tools::debugging"]
+rust-version = "1.70"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "time", "fs", "net", "signal"] }
+
+# gRPC and Protocol Buffers (Aligned Versions)
+tonic = { version = "0.11", features = ["transport", "tls", "gzip"] }
+prost = { version = "0.12" }
+prost-types = "0.12"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+
+# Utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+parking_lot = "0.12"
+anyhow = "1.0"
+
+# TLS/Cryptography
+openssl = { version = "0.10", features = ["vendored"] }
+openssl-sys = "0.9"
+foreign-types-shared = "0.1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Database
+rusqlite = { version = "0.30.0", features = ["bundled"] }
+
+# Configuration
+clap = { version = "4.0", features = ["derive", "env"] }
+config = "0.14"
+
+# Additional async utilities
+futures = "0.3"
+mdns-sd = "0.8"
+tower = "0.4"
+async-stream = "0.3"
+tokio-stream = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+axum = { version = "0.7", features = ["ws"] }
+rand = "0.8"
+hex = "0.4"
+hostname = "0.3"
+zip = "0.6"
+regex = "1.10"
+
+[build-dependencies]
+tonic-build = { version = "0.11", features = ["prost"] }
+
+[dev-dependencies]
+tempfile = "3.0"
+tokio-test = "0.4"
+
+[features]
+dev-utils = []
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[[bin]]
+name = "percepta-server"
+path = "src/main.rs"

@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "siem-server",
+    "siem-agent",
+]
+resolver = "2"

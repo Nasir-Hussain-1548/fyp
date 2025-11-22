@@ -1,0 +1,32 @@
+2025-11-09T13:44:52.954347043+00:00 | thread 'main' (8924) panicked at agent/src/bin/percepta-agent-windows.rs:69:28:
+Cannot start a runtime from within a runtime. This happens because a function (like `block_on`) attempted to block the current thread while the thread is being used to drive asynchronous tasks.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+2025-11-09T13:47:26.559628973+00:00 | 🚀 Percepta SIEM Agent v0.1.0
+📋 Configuration:
+   Server: 192.168.10.12:50051
+   Agent ID: DESKTOP-648439B-5139905a-ae4e-43d9-adc9-93489323abd6
+   Simulate Mode: false
+   Service Mode: false
+
+←[2m2025-11-09T13:47:02.221847Z←[0m ←[32m INFO←[0m ThreadId(01) Starting Percepta SIEM Agent v0.1.0
+←[2m2025-11-09T13:47:02.222705Z←[0m ←[32m INFO←[0m ThreadId(01) Configuration: server=192.168.10.12:50051, agent_id=DESKTOP-648439B-5139905a-ae4e-43d9-adc9-93489323abd6, simulate=false
+←[2m2025-11-09T13:47:02.223441Z←[0m ←[32m INFO←[0m ThreadId(01) File system initialized in: C:\ProgramData\percepta_agent\outgoing
+🔄 Starting agent loop...
+🔍 Attempting to connect to server: 192.168.10.12:50051
+←[2m2025-11-09T13:47:02.227986Z←[0m ←[31mERROR←[0m ThreadId(09) Failed to establish connection: Missing certificate file: agent_cert.pem at C:\ProgramData\percepta_agent\certs\agent_cert.pem
+✅ Successfully connected to server!
+←[2m2025-11-09T13:47:02.332719Z←[0m ←[32m INFO←[0m ThreadId(01) Successfully connected to server
+📊 Starting event collection...
+←[2m2025-11-09T13:47:02.334557Z←[0m ←[32m INFO←[0m ThreadId(02) Starting event collection loop (simulate_mode: false)
+←[2m2025-11-09T13:47:02.335462Z←[0m ←[32m INFO←[0m ThreadId(02) 🪟 Collecting Windows Event Log even ts (target 512)
+←[2m2025-11-09T13:47:02.347453Z←[0m ←[32m INFO←[0m ThreadId(05) [Health] Connection Status: connected=false, id=1
+←[2m2025-11-09T13:47:03.233320Z←[0m ←[31mERROR←[0m ThreadId(07) Failed to establish connection: Missing certificate file: agent_cert.pem at C:\ProgramData\percepta_agent\certs\agent_cert.pem
+←[2m2025-11-09T13:47:03.318761Z←[0m ←[32m INFO←[0m ThreadId(07) ✅ Collected 26 Windows events
+←[2m2025-11-09T13:47:03.319080Z←[0m ←[32m INFO←[0m ThreadId(07) 🪟 Collecting Windows Event Log even ts (target 512)
+←[2m2025-11-09T13:47:04.266799Z←[0m ←[32m INFO←[0m ThreadId(07) ✅ Collected 26 Windows events
+←[2m2025-11-09T13:47:05.244079Z←[0m ←[31mERROR←[0m ThreadId(02) Failed to establish connection: Missing certificate file: agent_cert.pem at C:\ProgramData\percepta_agent\certs\agent_cert.pem
+←[2m2025-11-09T13:47:12.336111Z←[0m ←[32m INFO←[0m ThreadId(02) 🪟 Collecting Windows Event Log even ts (target 512)
+←[2m2025-11-09T13:47:13.000393Z←[0m ←[32m INFO←[0m ThreadId(02) ✅ Collected 0 Windows events
+←[2m2025-11-09T13:47:13.001044Z←[0m ←[31mERROR←[0m ThreadId(02) Failed to establish connection: Missing certificate file: agent_cert.pem at C:\ProgramData\percepta_agent\certs\agent_cert.pem
+

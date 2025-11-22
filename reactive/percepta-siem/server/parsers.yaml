@@ -1,0 +1,216 @@
+# Percepta SIEM Parser Definitions
+# Defines how to parse different log sources into normalized Event format
+
+parsers:
+  - id: windows_security
+    name: Windows Security Event Log
+    source: windows_event_log
+    enabled: true
+    channel: Security
+    field_mappings:
+      # Common Windows Security Events
+      4624: # Successful logon
+        event.category: AUTH
+        event.action: logon
+        event.outcome: SUCCESS
+        user.name: extract(SubjectUserName)
+        user.domain: extract(SubjectDomainName)
+        user.id: extract(SubjectUserSid)
+        network.src_ip: extract(IpAddress)
+        metadata.logon_type: extract(LogonType)
+      
+      4625: # Failed logon
+        event.category: AUTH
+        event.action: logon
+        event.outcome: FAILURE
+        user.name: extract(TargetUserName)
+        user.domain: extract(TargetDomainName)
+        network.src_ip: extract(IpAddress)
+        metadata.failure_reason: extract(FailureReason)
+      
+      4672: # Special privileges assigned
+        event.category: AUTH
+        event.action: privilege_assignment
+        event.outcome: SUCCESS
+        user.name: extract(SubjectUserName)
+        user.privileges: extract_list(PrivilegeList)
+      
+      4688: # Process creation
+        event.category: PROCESS
+        event.action: process_create
+        process.name: extract(NewProcessName)
+        process.command_line: extract(CommandLine)
+        process.pid: extract(NewProcessId)
+        process.ppid: extract(ProcessId)
+        user.name: extract(SubjectUserName)
+      
+      4720: # User account created
+        event.category: AUTH
+        event.action: user_add
+        user.name: extract(TargetUserName)
+        metadata.creator: extract(SubjectUserName)
+
+  - id: linux_auth
+    name: Linux Authentication Logs
+    source: syslog
+    enabled: true
+    facility: authpriv
+    patterns:
+      - regex: 'Failed password for (?:invalid user )?(\S+) from (\S+) port (\d+)'
+        fields:
+          event.category: AUTH
+          event.action: logon
+          event.outcome: FAILURE
+          user.name: $1
+          network.src_ip: $2
+          network.src_port: $3
+      
+      - regex: 'Accepted (\S+) for (\S+) from (\S+) port (\d+)'
+        fields:
+          event.category: AUTH
+          event.action: logon
+          event.outcome: SUCCESS
+          metadata.auth_method: $1
+          user.name: $2
+          network.src_ip: $3
+          network.src_port: $4
+      
+      - regex: 'sudo:\s+(\S+) : TTY=(\S+) ; PWD=(\S+) ; USER=(\S+) ; COMMAND=(.+)'
+        fields:
+          event.category: PROCESS
+          event.action: privilege_escalation
+          user.name: $1
+          metadata.tty: $2
+          metadata.pwd: $3
+          metadata.target_user: $4
+          process.command_line: $5
+
+  - id: linux_audit
+    name: Linux Audit Daemon
+    source: auditd
+    enabled: true
+    patterns:
+      - regex: 'type=EXECVE.*a0="([^"]+)".*a1="([^"]*)"'
+        fields:
+          event.category: PROCESS
+          event.action: exec
+          process.name: $1
+          process.command_line: "$1 $2"
+      
+      - regex: 'type=SYSCALL.*syscall=(\d+).*success=(\w+).*exe="([^"]+)"'
+        fields:
+          event.category: SYSTEM
+          metadata.syscall: $1
+          event.outcome: $2
+          process.name: $3
+
+  - id: apache_access
+    name: Apache Access Logs
+    source: file
+    enabled: true
+    file_path: '/var/log/apache2/access.log'
+    pattern: '^(\S+) \S+ \S+ \[([^\]]+)\] "(\S+) (\S+) \S+" (\d+) (\d+)'
+    fields:
+      network.src_ip: $1
+      metadata.timestamp: $2
+      metadata.http_method: $3
+      metadata.http_path: $4
+      metadata.http_status: $5
+      metadata.bytes_sent: $6
+      event.category: NETWORK
+      event.action: http_request
+
+  - id: nginx_access
+    name: Nginx Access Logs
+    source: file
+    enabled: true
+    file_path: '/var/log/nginx/access.log'
+    pattern: '^(\S+) - (\S+) \[([^\]]+)\] "(\S+) (\S+) \S+" (\d+) (\d+)'
+    fields:
+      network.src_ip: $1
+      user.name: $2
+      metadata.timestamp: $3
+      metadata.http_method: $4
+      metadata.http_path: $5
+      metadata.http_status: $6
+      metadata.bytes_sent: $7
+      event.category: NETWORK
+      event.action: http_request
+
+  - id: ssh_daemon
+    name: SSH Daemon Logs
+    source: syslog
+    enabled: true
+    facility: daemon
+    program: sshd
+    patterns:
+      - regex: 'Connection from (\S+) port (\d+)'
+        fields:
+          event.category: NETWORK
+          event.action: ssh_connection
+          network.src_ip: $1
+          network.src_port: $2
+          network.direction: INBOUND
+      
+      - regex: 'Disconnected from (?:invalid user )?(\S+) (\S+) port (\d+)'
+        fields:
+          event.category: NETWORK
+          event.action: ssh_disconnect
+          user.name: $1
+          network.src_ip: $2
+          network.src_port: $3
+
+  - id: firewall_block
+    name: Firewall Block Events
+    source: syslog
+    enabled: true
+    patterns:
+      - regex: 'UFW BLOCK.*SRC=(\S+).*DST=(\S+).*PROTO=(\S+).*DPT=(\d+)'
+        fields:
+          event.category: NETWORK
+          event.action: firewall_block
+          event.outcome: BLOCKED
+          network.src_ip: $1
+          network.dst_ip: $2
+          network.protocol: $3
+          network.dst_port: $4
+      
+      - regex: 'iptables.*DROP.*SRC=(\S+).*DST=(\S+).*DPT=(\d+)'
+        fields:
+          event.category: NETWORK
+          event.action: firewall_drop
+          event.outcome: BLOCKED
+          network.src_ip: $1
+          network.dst_ip: $2
+          network.dst_port: $3
+
+  - id: process_monitor
+    name: Generic Process Monitoring
+    source: procmon
+    enabled: true
+    fields:
+      event.category: PROCESS
+      process.name: extract(image_path)
+      process.pid: extract(process_id)
+      process.ppid: extract(parent_pid)
+      process.command_line: extract(command_line)
+      user.name: extract(user)
+
+# Parser configuration
+config:
+  # Maximum events to buffer before dropping
+  max_buffer_size: 10000
+  
+  # Enable auto-detection of log sources
+  auto_detect: true
+  
+  # Normalization settings
+  normalize:
+    # Convert timestamps to UTC
+    utc_timestamps: true
+    
+    # Lowercase usernames
+    lowercase_users: false
+    
+    # Extract and hash sensitive fields
+    hash_sensitive: true
